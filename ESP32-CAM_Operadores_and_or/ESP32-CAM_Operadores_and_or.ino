@@ -10,8 +10,10 @@
 
 /* Ejemplo Operadores and y or en C
  * Además se utiliza el sensor de temperatura DHT11
+ * Enecender un led y leer un botón.
+ * Este programa enciende un led cuando se presiona un botón
  * Por: JMC
- * 13 de abril de 2022 
+ * 18 de abril de 2022 
  */ 
 
 // Bibliotecas
@@ -32,10 +34,12 @@
 
 
 // Constantes
-
+const int Led = 4; // led flash pin
+const int Boton = 2; // IO2
 
 // Variables
 uint32_t delayMS;
+int dato;
 
 // Definicion de objetos
 DHT_Unified dht(DHTPIN, DHTTYPE);
@@ -43,6 +47,11 @@ DHT_Unified dht(DHTPIN, DHTTYPE);
 // Condiciones iniciales
 void setup() {// Inicio Void setup()
   Serial.begin(115200);
+  // Configurar pines
+  pinMode (Boton, INPUT_PULLUP); // Se activa la resistencia de PULLUP
+  pinMode (Led, OUTPUT);  
+  digitalWrite (Led, HIGH);
+  
   // Initialize device.
   dht.begin();
   Serial.println(F("DHTxx Unified Sensor Example"));
@@ -75,6 +84,8 @@ void setup() {// Inicio Void setup()
 // Cuerpo del programa
 void loop() { // Inicio void loop()
   // Delay between measurements.
+  dato = digitalRead (Boton);
+  digitalWrite (Led, !dato);
   delay(delayMS);
   // Get temperature event and print its value.
   sensors_event_t event;
