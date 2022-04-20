@@ -1,12 +1,3 @@
-// DHT Temperature & Humidity Sensor
-// Unified Sensor Library Example
-// Written by Tony DiCola for Adafruit Industries
-// Released under an MIT license.
-
-// REQUIRES the following Arduino libraries:
-// - DHT Sensor Library: https://github.com/adafruit/DHT-sensor-library
-// - Adafruit Unified Sensor Lib: https://github.com/adafruit/Adafruit_Sensor
-
 
 /* Ejemplo Operadores and y or en C
  * Además se utiliza el sensor de temperatura DHT11
@@ -17,97 +8,86 @@
  */ 
 
 // Bibliotecas
-#include <Adafruit_Sensor.h>
-#include <DHT.h>
-#include <DHT_U.h>
+#include "DHT.h"
 
 #define DHTPIN 14     // Digital pin connected to the DHT sensor 
-// Feather HUZZAH ESP8266 note: use pins 3, 4, 5, 12, 13 or 14 --
-// Pin 15 can work but DHT must be disconnected during program upload.
-// Uncomment the type of sensor in use:
-#define DHTTYPE    DHT11     // DHT 11
-//#define DHTTYPE    DHT22     // DHT 22 (AM2302)
-//#define DHTTYPE    DHT21     // DHT 21 (AM2301)
 
-// See guide for details on sensor wiring and usage:
-//   https://learn.adafruit.com/dht/overview
+#define DHTTYPE    DHT11     // DHT 11
+
 
 
 // Constantes
-const int Led = 4; // led flash pin
-const int Boton = 2; // IO2
+const int Led1 = 4; // led flash pin - Refrigeración manual
+const int Led2 = 2; // led pin - Refrigeración Automática
+
+const int Boton1 = 12; // IO12 Activa la refrigeración manual
+const int Boton2 = 13; // IO12 Alta demanda
+const int Boton3 = 15; // IO12 Sobrecarga de funcionamiento
 
 // Variables
-uint32_t delayMS;
-int dato;
-
+unsigned long delayMS = 1000;
+int dato1, dato2, dato3;
+unsigned long tiempo_inicio = 0, tiempo_actual;
+float t;
+ 
 // Definicion de objetos
-DHT_Unified dht(DHTPIN, DHTTYPE);
+DHT dht(DHTPIN, DHTTYPE);
 
 // Condiciones iniciales
 void setup() {// Inicio Void setup()
   Serial.begin(115200);
   // Configurar pines
-  pinMode (Boton, INPUT_PULLUP); // Se activa la resistencia de PULLUP
-  pinMode (Led, OUTPUT);  
-  digitalWrite (Led, HIGH);
+  pinMode (Boton1, INPUT_PULLUP); // Se activa la resistencia de PULLUP
+  pinMode (Boton2, INPUT_PULLUP); // Se activa la resistencia de PULLUP
+  pinMode (Boton3, INPUT_PULLUP); // Se activa la resistencia de PULLUP
+  pinMode (Led1, OUTPUT);  
+  pinMode (Led2, OUTPUT);  
+  digitalWrite (Led1, LOW);
+  digitalWrite (Led2, LOW);
   
   // Initialize device.
   dht.begin();
-  Serial.println(F("DHTxx Unified Sensor Example"));
-  // Print temperature sensor details.
-  sensor_t sensor;
-  dht.temperature().getSensor(&sensor);
-  Serial.println(F("------------------------------------"));
-  Serial.println(F("Temperature Sensor"));
-  Serial.print  (F("Sensor Type: ")); Serial.println(sensor.name);
-  Serial.print  (F("Driver Ver:  ")); Serial.println(sensor.version);
-  Serial.print  (F("Unique ID:   ")); Serial.println(sensor.sensor_id);
-  Serial.print  (F("Max Value:   ")); Serial.print(sensor.max_value); Serial.println(F("°C"));
-  Serial.print  (F("Min Value:   ")); Serial.print(sensor.min_value); Serial.println(F("°C"));
-  Serial.print  (F("Resolution:  ")); Serial.print(sensor.resolution); Serial.println(F("°C"));
-  Serial.println(F("------------------------------------"));
-  // Print humidity sensor details.
-  dht.humidity().getSensor(&sensor);
-  Serial.println(F("Humidity Sensor"));
-  Serial.print  (F("Sensor Type: ")); Serial.println(sensor.name);
-  Serial.print  (F("Driver Ver:  ")); Serial.println(sensor.version);
-  Serial.print  (F("Unique ID:   ")); Serial.println(sensor.sensor_id);
-  Serial.print  (F("Max Value:   ")); Serial.print(sensor.max_value); Serial.println(F("%"));
-  Serial.print  (F("Min Value:   ")); Serial.print(sensor.min_value); Serial.println(F("%"));
-  Serial.print  (F("Resolution:  ")); Serial.print(sensor.resolution); Serial.println(F("%"));
-  Serial.println(F("------------------------------------"));
-  // Set delay between sensor readings based on sensor details.
-  delayMS = sensor.min_delay / 1000;
 }// Fin Void setup()
 
 // Cuerpo del programa
 void loop() { // Inicio void loop()
-  // Delay between measurements.
-  dato = digitalRead (Boton);
-  digitalWrite (Led, !dato);
-  delay(delayMS);
-  // Get temperature event and print its value.
-  sensors_event_t event;
-  dht.temperature().getEvent(&event);
-  if (isnan(event.temperature)) {
-    Serial.println(F("Error reading temperature!"));
+  tiempo_actual = millis();
+  
+  if (tiempo_actual - tiempo_inicio > delayMS){
+    // Reading temperature or humidity takes about 250 milliseconds!
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    // Read temperature as Celsius (the default)
+    t = dht.readTemperature();
+    
+    // Check if any reads failed and exit early (to try again).
+    if (isnan(t)) {
+      Serial.println(F("Error de lectura del sensor DHT11!"));
+      return;
+    }
+    Serial.print(F("Temperatura: "));
+    Serial.print(t);
+    Serial.println(F("°C "));
+    
+    tiempo_inicio = tiempo_actual;
+  }
+  
+  dato1 = digitalRead (Boton1);
+  dato2 = digitalRead (Boton2);
+  dato3 = digitalRead (Boton3);
+  if (!dato1 || (!dato3 && (t > 30)) || (!dato2 && (t > 30))) {
+    digitalWrite (Led1, HIGH); 
   }
   else {
-    Serial.print(F("Temperature: "));
-    Serial.print(event.temperature);
-    Serial.println(F("°C"));
+    digitalWrite (Led1, LOW); 
   }
-  // Get humidity event and print its value.
-  dht.humidity().getEvent(&event);
-  if (isnan(event.relative_humidity)) {
-    Serial.println(F("Error reading humidity!"));
+  if ((!dato3 && (t > 30)) || (!dato2 && (t > 30)) || (dato1 && (t > 30)) || (dato1 && !dato2) || (dato1 && !dato3)) {
+    digitalWrite (Led2, HIGH); 
   }
   else {
-    Serial.print(F("Humidity: "));
-    Serial.print(event.relative_humidity);
-    Serial.println(F("%"));
-  }    
+    digitalWrite (Led2, LOW); 
+  }
+  
+        
 } //Fin loop()
 
 // Funciones del usuario
