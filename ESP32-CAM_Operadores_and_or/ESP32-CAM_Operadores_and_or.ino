@@ -5,6 +5,7 @@
  * Este programa enciende un led cuando se presiona un botón
  * Por: JMC
  * 18 de abril de 2022 
+ * Actualizado: 20 de abril de 2022
  */ 
 
 // Bibliotecas
@@ -17,8 +18,8 @@
 
 
 // Constantes
-const int Led1 = 4; // led flash pin - Refrigeración manual
-const int Led2 = 2; // led pin - Refrigeración Automática
+const int Led1 = 4; // led flash pin - Indica estado de la Refrigeración manual
+const int Led2 = 2; // led pin - Indica estado de la Refrigeración Automática
 
 const int Boton1 = 12; // IO12 Activa la refrigeración manual
 const int Boton2 = 13; // IO12 Alta demanda
@@ -26,7 +27,9 @@ const int Boton3 = 15; // IO12 Sobrecarga de funcionamiento
 
 // Variables
 unsigned long delayMS = 1000;
-int dato1, dato2, dato3;
+int dato1;  // Almacena el estado del Boton1
+int dato2;  // Almacena el estado del Boton2
+int dato3;  // Almacena el estado del Boton3
 unsigned long tiempo_inicio = 0, tiempo_actual;
 float t;
  
