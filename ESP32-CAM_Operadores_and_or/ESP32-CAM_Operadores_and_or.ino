@@ -57,6 +57,7 @@ void loop() { // Inicio void loop()
   tiempo_actual = millis();
   
   if (tiempo_actual - tiempo_inicio > delayMS){
+    tiempo_inicio = tiempo_actual;
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
     // Read temperature as Celsius (the default)
@@ -69,9 +70,8 @@ void loop() { // Inicio void loop()
     }
     Serial.print(F("Temperatura: "));
     Serial.print(t);
-    Serial.println(F("°C "));
+    Serial.println(F("°C "));  
     
-    tiempo_inicio = tiempo_actual;
   }
   
   dato1 = digitalRead (Boton1);
